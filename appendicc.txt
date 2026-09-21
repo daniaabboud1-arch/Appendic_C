@@ -1,0 +1,65 @@
+\\ Plot of I(C : R|B) and Q∗ as
+Functions of t 
+
+import numpy as np
+import matplotlib.pyplot as plt
+
+p = 0.1
+t_values = np.linspace(0, 0.02, 51)
+
+def Pdist(p, t):
+    Pxy = np.array([
+        [(1-p)**2+t, p*(1-p)-t],
+        [p*(1-p)-t, p**2+t]
+    ])
+    P = np.zeros((2,2,2))
+    for b in range(2):
+        for x in range(2):
+            for y in range(2):
+                P[b,b^y,b^x] += 0.5*Pxy[x,y]
+    return P
+
+def CMI(P):
+    PB, PBR, PBC = P.sum((1,2)), P.sum(1), P.sum(2)
+    return sum(
+        P[b,c,r]*np.log2(
+            P[b,c,r]*PB[b]/(PBR[b,r]*PBC[b,c])
+        )
+        for b in range(2)
+        for c in range(2)
+        for r in range(2)
+        if P[b,c,r] > 0
+    )
+
+CMI_values = np.array([CMI(Pdist(p,t)) for t in t_values])
+Qstar_values = CMI_values/2
+
+print(f"I(C:R|B) = {CMI_values[-1]:.6f} bits")
+print(f"Q* = {Qstar_values[-1]:.6f} qubits")
+
+plt.figure(figsize=(7,5))
+
+plt.plot(
+    t_values,
+    CMI_values,
+    label=r"$I(C:R|B)$"
+)
+
+plt.plot(
+    t_values,
+    Qstar_values,
+    label=r"$Q^*$"
+)
+
+plt.scatter(
+    0.02,
+    CMI_values[-1]
+)
+
+plt.xlabel(r"$t$")
+plt.ylabel("Bits / qubits")
+plt.legend()
+plt.grid()
+plt.tight_layout()
+plt.show()
+
